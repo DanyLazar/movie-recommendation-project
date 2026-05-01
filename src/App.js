@@ -4,8 +4,10 @@ import MovieCard from './components/MovieCard';
 import MovieCardCompact from './components/MovieCardCompact';
 import Loader from './components/Loader';
 import GenreFilter from './components/GenreFilter';
+import SearchHistory from './components/SearchHistory';
 import { useMovieData } from './hooks/useMovieData';
 import { useGenreMovies } from './hooks/useGenreMovies';
+import { saveToHistory, getHistory } from './utils/storage';
 
 function App() {
   const { movie, loading, error, searchMovie: fetchMovie } = useMovieData();
@@ -13,12 +15,15 @@ function App() {
   const [selectedGenre, setSelectedGenre] = useState('All');
   const [searchedMovie, setSearchedMovie] = useState(null);
   const [selectedMovie, setSelectedMovie] = useState(null);
+  const [history, setHistory] = useState(getHistory());
 
-  // Cautare dupa titlu — reseteaza genul si modul browse
+  // Cautare dupa titlu — reseteaza genul, salveaza in istoric
   const searchMovie = (title) => {
     setSelectedGenre('All');
     setSearchedMovie(title);
     setSelectedMovie(null);
+    saveToHistory(title);
+    setHistory(getHistory());
     fetchMovie(title);
   };
 
@@ -61,6 +66,14 @@ function App() {
       {/* Main content */}
       <main className="max-w-5xl mx-auto px-4 py-10">
         <SearchBar onSearch={searchMovie} />
+
+        {/* Istoric cautari */}
+        <SearchHistory
+          history={history}
+          onSelect={searchMovie}
+          onClear={() => setHistory([])}
+        />
+
         <GenreFilter selectedGenre={selectedGenre} onGenreChange={handleGenreChange} />
 
         {/* ── MOD SEARCH: rezultat unic ── */}
@@ -83,7 +96,6 @@ function App() {
           <>
             {loadingGenre && <Loader />}
 
-            {/* Detaliu film selectat din grilă */}
             {selectedMovie && (
               <div className="animate-fade-in-up">
                 <button
@@ -96,7 +108,6 @@ function App() {
               </div>
             )}
 
-            {/* Grilă filme gen */}
             {!loadingGenre && !selectedMovie && genreMovies.length > 0 && (
               <div className="animate-fade-in-up">
                 <p className="text-gray-600 text-xs uppercase tracking-widest mb-6">
